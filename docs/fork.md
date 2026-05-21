@@ -84,7 +84,9 @@ There is only one exception to this: GitHub-Stats-Extended improves line wrappin
 This should be an improvement for existing cards, but it still changes their appearance a bit.
 
 Previously, line wrapping happened simply after 59 characters, with special handling for Chinese characters:
+
 <img width="400" height="140" alt="character-based" src="https://github.com/user-attachments/assets/1cf7edba-7f6c-4a37-89d7-334cbe54f0f1" />
 
 GitHub-Stats-Extended now takes the actual width of each character into account:
+
 <img width="400" height="150" alt="new-server-side-calculation" src="https://github.com/user-attachments/assets/277b92df-b2a9-48be-bd2a-d28c1d6764c5" />
