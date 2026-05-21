@@ -36,7 +36,7 @@ To migrate from [github-readme-stats](https://github.com/anuraghazra/github-read
 + https://github-stats-extended.vercel.app/api?username=octocat&theme=radical
 ```
 
-GitHub-Stats-Extended aims to be fully compatible with [github-readme-stats](https://github.com/anuraghazra/github-readme-stats). For more details see [Compatibility Notes](docs/fork.md#compatibility-notes).
+GitHub-Stats-Extended aims to be fully compatible with github-readme-stats. For more details see [Compatibility Notes](docs/fork.md#compatibility-notes).
 
 # Card Types
 - Show your GitHub statistics:
@@ -66,13 +66,13 @@ GitHub-Stats-Extended aims to be fully compatible with [github-readme-stats](htt
 # Advanced Customization
 The [GitHub-Stats-Extended Wizard](https://github-stats-extended.vercel.app/frontend) offers some essential customization options. For more advanced customization check out the [advanced documentation](docs/advanced_documentation.md).
 
-# Acknowledgements
-This project is based on [github-readme-stats](https://github.com/anuraghazra/github-readme-stats). On top of that project's functionality GitHub-Stats-Extended adds several new features and improvements. See [Fork Information](docs/fork.md) for a list of changes. The frontend added to GitHub-Stats-Extended is based on [GitHub Trends](https://github.com/avgupta456/github-trends). Big thanks to [@anuraghazra](https://github.com/anuraghazra), [@avgupta456](https://github.com/avgupta456), [@rickstaa](https://github.com/rickstaa), [@qwerty541](https://github.com/qwerty541) and everyone else who worked on these projects! ❤️
-
 # Run It Yourself
 If you want to run GitHub-Stats-Extended on your own, there are two main deployment options: you can use [github-readme-stats-action](https://github.com/stats-organization/github-readme-stats-action) to generate cards in your own GitHub Actions workflow. Or you can self-host GitHub-Stats-Extended on Vercel.
 
-See [Deploy on your own](docs/deploy.md) for detailed instructions.
+See [Run It Yourself](docs/deploy.md) for detailed instructions.
+
+# Acknowledgements
+This project is based on [github-readme-stats](https://github.com/anuraghazra/github-readme-stats). On top of that project's functionality GitHub-Stats-Extended adds several new features and improvements. See [Fork Information](docs/fork.md) for a list of changes. The frontend added to GitHub-Stats-Extended is based on [GitHub Trends](https://github.com/avgupta456/github-trends). Big thanks to [@anuraghazra](https://github.com/anuraghazra), [@avgupta456](https://github.com/avgupta456), [@rickstaa](https://github.com/rickstaa), [@qwerty541](https://github.com/qwerty541) and everyone else who worked on these projects! ❤️
 
 # Contributing
 Contributions are welcome!
