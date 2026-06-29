@@ -55,8 +55,8 @@ export function TextSection({
       <input
         type="text"
         className={clsx(
-          "border border-gray-300 rounded px-2 py-1 mt-2 w-3/4 min-w-48 max-w-xl",
-          { "cursor-not-allowed bg-gray-100": disabled, "bg-white": !disabled },
+          "border border-base-content/20 rounded px-2 py-1 mt-2 w-3/4 min-w-48 max-w-xl",
+          disabled ? "cursor-not-allowed bg-base-200" : "bg-base-100",
         )}
         value={internalValue}
         onChange={(e) => {
