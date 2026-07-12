@@ -1,4 +1,4 @@
-import { getCardColors } from "./color.js";
+import { getCardColors, isPrefixedHexColor } from "./color.js";
 import { SECONDARY_ERROR_MESSAGES, TRY_AGAIN_LATER } from "./error.js";
 import { encodeHTML } from "./html.js";
 import { clampValue } from "./ops.js";
@@ -7,8 +7,10 @@ import { clampValue } from "./ops.js";
  * Auto layout utility, allows us to layout things vertically or horizontally with
  * proper gaping.
  *
+ * The caller must ensure that the passed `items` are properly sanitized!
+ *
  * @param props Function properties.
- * @param props.items Array of items to layout.
+ * @param props.items Array of sanitized items to layout.
  * @param props.gap Gap between items.
  * @param props.direction Direction to layout items.
  * @param props.sizes Array of sizes for each item.
@@ -25,6 +27,10 @@ const flexLayout = ({
   direction?: "column" | "row";
   sizes?: Array<number>;
 }): Array<string> => {
+  if (sizes.some((size) => !Number.isFinite(size))) {
+    throw new Error("flexLayout: `sizes` must contain only numbers");
+  }
+
   let lastSize = 0;
   // filter() for filtering out empty strings
   return items.filter(Boolean).map((item, i) => {
@@ -46,10 +52,14 @@ const flexLayout = ({
  * @returns Language display SVG object.
  */
 const createLanguageNode = (langName: string, langColor: string): string => {
+  if (!isPrefixedHexColor(langColor)) {
+    throw new Error(`Invalid language color: "${langColor}"`);
+  }
+
   return `
     <g data-testid="primary-lang">
       <circle data-testid="lang-color" cx="0" cy="-5" r="6" fill="${langColor}" />
-      <text data-testid="lang-name" class="gray" x="15">${langName}</text>
+      <text data-testid="lang-name" class="gray" x="15">${encodeHTML(langName)}</text>
     </g>
     `;
 };
@@ -84,6 +94,27 @@ const createProgressNode = ({
   progressBarBackgroundColor: string;
   delay: number;
 }): string => {
+  if (!isPrefixedHexColor(color)) {
+    throw new Error(`Invalid progress color: "${color}"`);
+  }
+  if (!isPrefixedHexColor(progressBarBackgroundColor)) {
+    throw new Error(
+      `Invalid progress bar background color: "${progressBarBackgroundColor}"`,
+    );
+  }
+  if (!Number.isFinite(width)) {
+    throw new Error(`Invalid width: "${width}"`);
+  }
+  if (!Number.isFinite(x)) {
+    throw new Error(`Invalid x: "${x}"`);
+  }
+  if (!Number.isFinite(y)) {
+    throw new Error(`Invalid y: "${y}"`);
+  }
+  if (!Number.isFinite(delay)) {
+    throw new Error(`Invalid delay: "${delay}"`);
+  }
+
   const progressPercentage = clampValue(progress, 2, 100);
 
   return `
@@ -137,10 +168,26 @@ const wrappedTextNode = ({
   className: string;
   testId?: string;
 }): string => {
-  const testIdAttr = testId ? ` data-testid="${testId}"` : "";
+  if (!Number.isFinite(x)) {
+    throw new Error(`Invalid x: "${x}"`);
+  }
+  if (!Number.isFinite(y)) {
+    throw new Error(`Invalid y: "${y}"`);
+  }
+  if (!Number.isFinite(width)) {
+    throw new Error(`Invalid width: "${width}"`);
+  }
+  if (!Number.isFinite(height)) {
+    throw new Error(`Invalid height: "${height}"`);
+  }
+  if (!Number.isFinite(lineCount)) {
+    throw new Error(`Invalid lineCount: "${lineCount}"`);
+  }
+
+  const testIdAttr = testId ? ` data-testid="${encodeHTML(testId)}"` : "";
   return `
     <foreignObject x="${x}" y="${y}" width="${width}" height="${height}">
-      <div xmlns="http://www.w3.org/1999/xhtml" class="${className}" style="--lines: ${lineCount};"${testIdAttr}>${encodeHTML(
+      <div xmlns="http://www.w3.org/1999/xhtml" class="${encodeHTML(className)}" style="--lines: ${lineCount};"${testIdAttr}>${encodeHTML(
         text,
       )}</div>
     </foreignObject>
@@ -156,25 +203,33 @@ const wrappedTextNode = ({
  * @param color Text color (CSS `color` property).
  * @returns CSS rules block (without the surrounding selector).
  */
-const wrappedTextStyles = (color: string): string => `
-    color: ${color};
-    margin: 0;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: var(--lines);
-    line-clamp: var(--lines);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-bottom: 0.15em;
-`;
+const wrappedTextStyles = (color: string): string => {
+  if (!isPrefixedHexColor(color)) {
+    throw new Error(`Invalid text color: "${color}"`);
+  }
+
+  return `
+      color: ${color};
+      margin: 0;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: var(--lines);
+      line-clamp: var(--lines);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-bottom: 0.15em;
+  `;
+};
 
 /**
  * Creates an icon with label to display repository/gist stats like forks, stars, etc.
  *
- * @param icon The icon to display.
+ * The caller must ensure that the passed `icon` is properly sanitized!
+ *
+ * @param icon The sanitized icon to display.
  * @param label The label to display.
  * @param testid The testid to assign to the label.
  * @param iconSize The size of the icon.
@@ -189,6 +244,11 @@ const iconWithLabel = (
   if (typeof label === "number" && label <= 0) {
     return "";
   }
+
+  if (!Number.isFinite(iconSize)) {
+    throw new Error(`Invalid iconSize: "${iconSize}"`);
+  }
+
   const iconSvg = `
       <svg
         class="icon"
@@ -201,7 +261,7 @@ const iconWithLabel = (
         ${icon}
       </svg>
     `;
-  const text = `<text data-testid="${testid}" class="gray">${label}</text>`;
+  const text = `<text data-testid="${encodeHTML(testid)}" class="gray">${encodeHTML(String(label))}</text>`;
   return flexLayout({ items: [iconSvg, text], gap: 20 }).join("");
 };
 
@@ -281,7 +341,7 @@ const renderError = ({
     }</text>
     <text data-testid="message" x="25" y="55" class="text small">
       <tspan x="25" dy="18">${encodeHTML(message)}</tspan>
-      <tspan x="25" dy="18" class="gray">${secondaryMessage}</tspan>
+      <tspan x="25" dy="18" class="gray">${encodeHTML(secondaryMessage)}</tspan>
     </text>
     </svg>
   `;
