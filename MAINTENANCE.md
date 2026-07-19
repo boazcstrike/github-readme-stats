@@ -86,13 +86,22 @@ but new commits will not ship until the project is reconfigured.
 successor's own `docs/deploy.md` step 11.
 
 1. **General → Root Directory → set to `apps/backend`** (so `apps/backend/vercel.json` +
-   `vercel-preparation.sh` drive the Build Output API v3 build). ← the actual fix.
-2. **Environment Variables** — keep **`PAT_1`** (your GitHub PAT; classic `repo`+`read:user`
+   `vercel-preparation.sh` drive the Build Output API v3 build). ← fix #1. (Current: `null`/root.)
+2. **General → Node.js Version → set to `24.x`** (or the highest offered, ≥22). ← fix #2.
+   The monorepo pins **Node 24** (`.nvmrc`=v24, `engines.node:"24.x"`); the project is currently
+   on **18.x**, which fails the build regardless of Root Directory.
+3. **Environment Variables** — keep **`PAT_1`** (your GitHub PAT; classic `repo`+`read:user`
    for private-contribution counts). Add **`TURBO_PLATFORM_ENV_DISABLED=true`** to silence a
    harmless turbo build warning.
-3. Leave Framework Preset = **Other**; do not override Build/Install commands (vercel.json owns them).
-4. **Redeploy.** The `/api?username=` route still exists (`router.js:82`) → your existing card
+4. Leave Framework Preset = **Other**; do not override Build/Install commands (vercel.json owns them).
+5. **Redeploy.** The `/api?username=` route still exists (`router.js:82`) → your existing card
    URL stays valid once the build succeeds.
+
+Verified project facts (via `vercel pull`, 2026-07-20): `projectId prj_bsHRXoXznHpnLmNup1dxKAUoXAJp`,
+`orgId team_DadBqbdhHPz8nHkqprKhTwIs`, current `rootDirectory=null`, `nodeVersion=18.x`,
+`framework=none`. A local `vercel build`/`--prebuilt` deploy is **not viable on Windows** — the
+build pipeline (`vercel-preparation.sh`, `shopt`, `cp -RP`) is Linux-shell-only; Vercel builds it
+on Linux. So the two settings above must be changed via the dashboard or the Vercel REST API.
 
 Optional (NOT needed for the static card, and left OFF by our security patch): `POSTGRES_URL`
 + `OAUTH_CLIENT_ID`/`OAUTH_CLIENT_SECRET`/`OAUTH_REDIRECT_URI` enable the OAuth "trends" web
