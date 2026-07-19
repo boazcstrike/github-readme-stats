@@ -62,6 +62,35 @@ git merge extended/master        # or: git rebase extended/master
 git push origin main
 ```
 
+## Deployment (READ BEFORE REDEPLOYING) ⚠️
+
+**This profile's stats card is served from `github-readme-stats-boazcstrike.vercel.app`
+(a self-hosted Vercel deployment of this repo).** The successor restructured the project, so
+the old Vercel setup **will not build the new tree as-is**:
+
+- Old repo: simple `api/index.js` serverless function, zero-config Vercel preset.
+- New repo (`github-stats-extended`): **pnpm + turbo monorepo** using the **Vercel Build
+  Output API v3**. The backend lives in `apps/backend/` with its own `apps/backend/vercel.json`
+  (custom `buildCommand` + `vercel-preparation.sh` assembling `.vercel/output`). A **single
+  `api.func`** serves all routes via `apps/backend/router.js`.
+- New runtime dependency: **`pg` (Postgres)** — used for the OAuth per-user token feature
+  (`getUserPat` → DB lookup). Basic env-PAT stats cards still work, but DB code paths expect a
+  database to be configured.
+
+**To keep the profile card working after adopting this monorepo, the Vercel project must be
+reconfigured:** set **Root Directory = `apps/backend`** (so `apps/backend/vercel.json` is used),
+let Vercel use the Build Output API output, and keep the `PAT_1` (GitHub token) env var. The
+`/api?username=` route still exists (`router.js:82`), so the existing card URL stays valid once
+the build succeeds.
+
+> If auto-deploy is on, pushing this branch may trigger a build with the **old** project
+> settings, which will fail — Vercel keeps the last good deploy live, so the card should not
+> break, but the new features won't ship until the project is reconfigured. Verify in the
+> Vercel dashboard.
+
+Old card URL (unchanged, still valid):
+`https://github-readme-stats-boazcstrike.vercel.app/api?username=boazcstrike&count_private=true&show_icons=true&theme=dark&include_all_commits`
+
 ## Security posture
 
 ### Dependency audit — CLEAN
@@ -85,7 +114,7 @@ redirect, `dangerouslySetInnerHTML`.
 
 | # | Severity | Location | Issue |
 |---|----------|----------|-------|
-| 1 | **HIGH** | `packages/core/src/fetchers/wakatime.js:17-21` | **SSRF** — `api_domain` query param interpolated into outbound URL unvalidated. Unauthenticated `/api/wakatime?api_domain=`. Attacker → cloud-metadata (`169.254.169.254`), localhost, or arbitrary host. `username` also un-encoded → path traversal off the fixed path. *(Confirmed independently by both agents.)* |
+| 1 | ~~**HIGH**~~ ✅ **PATCHED** | `packages/core/src/fetchers/wakatime.js` | **SSRF** — `api_domain` query param interpolated into outbound URL unvalidated. Unauthenticated `/api/wakatime?api_domain=`. Attacker → cloud-metadata (`169.254.169.254`), localhost, or arbitrary host. `username` also un-encoded → path traversal off the fixed path. *(Confirmed independently by both agents.)* **Fork patch:** `api_domain` now validated as bare hostname, private/metadata IPs blocked, `username` `encodeURIComponent`-wrapped, `err.response` guarded. *This diverges from upstream — re-apply after each `extended` merge, or drop once fixed upstream.* |
 | 2 | **HIGH** | `apps/backend/api-renamed/user-access.js:12-23` | **Token disclosure** — unauthenticated `GET /api/user-access?user_key=` returns raw GitHub OAuth `access_token`. Secret `user_key` travels in URL query string (`frontend/src/api/user.ts`) → leaks to CDN/proxy logs + Referer. No rate limit. Key leak = full token compromise. |
 | 3 | MEDIUM | `apps/backend/api-renamed/repeat-recent.js` + `src/repeatRequests.js:28` | Unauthenticated request-amplification endpoint; replays all stored request URLs, no batch cap → DoS/PAT-quota burn. Needs `CRON_SECRET`. |
 | 4 | MEDIUM | `apps/frontend/src/components/Card/SvgInline.tsx:109` | Server SVG injected via `innerHTML` into live shadow root (not `<img>`) → removes the "SVG-is-just-an-image" mitigation; whole XSS surface now depends on zero escaping gaps. Use `<img src>` or DOMPurify. |

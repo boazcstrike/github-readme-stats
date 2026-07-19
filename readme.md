@@ -1,3 +1,27 @@
+<!-- ─────────────────────────────────────────────────────────────────────────
+     FORK NOTICE — boazcstrike/github-readme-stats
+     ───────────────────────────────────────────────────────────────────────── -->
+> ## 🔀 This is a personal fork
+>
+> **Upstream history:**
+> - The original **[`anuraghazra/github-readme-stats`](https://github.com/anuraghazra/github-readme-stats)** is **DEPRECATED / no longer maintained.**
+> - Development **moved to the successor [`stats-organization/github-stats-extended`](https://github.com/stats-organization/github-stats-extended)** — an actively maintained fork with more features and better stability.
+>
+> **This fork now tracks the live successor (`github-stats-extended`), not the deprecated original.**
+>
+> ### How to sync the latest changes into this fork
+> ```bash
+> # one-time remote setup
+> git remote add extended https://github.com/stats-organization/github-stats-extended.git
+>
+> # each sync
+> git fetch extended
+> git merge extended/master        # resolve conflicts, take theirs for readme/config
+> git push origin main
+> ```
+> Full maintenance context, remotes, and the security audit live in **[`MAINTENANCE.md`](MAINTENANCE.md)**.
+<!-- ───────────────────────────────────────────────────────────────────────── -->
+
 <div align="center">
   <img src="docs/appIcon.svg" width="100px" alt="GitHub Stats Extended Logo" />
   <h1>GitHub Stats Extended</h1>
