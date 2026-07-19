@@ -149,6 +149,31 @@ https://github-readme-stats-five-mu-85.vercel.app/api?...    ✅ fixed team proj
 (`five-mu-85` is the project's verified custom domain and tracks production;
 `…-boazcstrikes-projects.vercel.app` works too.)
 
+**DONE (2026-07-20):** profile README (`boazcstrike/boazcstrike`) repointed to
+`github-readme-stats-five-mu-85.vercel.app` (commit `d193753`). Card verified live.
+
+### Legacy Vercel app — `github-readme-stats-boazcstrike.vercel.app` (decommission manually)
+
+Before this project was moved into the **team** scope (`boazcstrikes-projects`), it ran as a
+**personal-scope** Vercel app at **`github-readme-stats-boazcstrike.vercel.app`**. That old app:
+
+- still resolves and serves a card (**stale/old code**), so it looked like it was "working";
+- is **not** git-connected to the current flow and does **not** receive new deploys;
+- is **invisible to the team-scoped API token** used for the fix — so it could not be deleted
+  programmatically from this session.
+
+**To remove it (manual, needs personal-scope access):**
+1. vercel.com/dashboard → top-left scope switcher → select your **personal** account
+   (`boazcstrike`), not the `boazcstrikes-projects` team.
+2. Open the old `github-readme-stats` project there → **Settings → Advanced → Delete Project**.
+3. (Optional) confirm nothing else still embeds `…-boazcstrike.vercel.app` first — the profile
+   README no longer does.
+
+Why keep this note: the two look identical in a browser (both return a stats SVG), so it is
+easy to "fix" the wrong one. The **team** project (`five-mu-85` / `boazcstrikes-projects`) is the
+live, maintained, git-connected, security-patched one. The personal `…-boazcstrike` app is the
+legacy leftover.
+
 ## Security posture
 
 ### Dependency audit — CLEAN
