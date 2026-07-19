@@ -114,6 +114,41 @@ endpoints 404 until you set the OAuth trio.
 Old card URL (unchanged, still valid):
 `https://github-readme-stats-boazcstrike.vercel.app/api?username=boazcstrike&count_private=true&show_icons=true&theme=dark&include_all_commits`
 
+## Deployment STATUS — RESOLVED (2026-07-20) ✅
+
+The monorepo now builds and serves on Vercel. What it took:
+
+1. **Root Directory** `null → apps/backend` (via REST API).
+2. **Node** `18.x → 24.x` (monorepo pins Node 24).
+3. **`ENABLE_EXPERIMENTAL_COREPACK=1`** — first build failed with `pnpm deploy: Unknown option
+   'legacy'` because Vercel defaulted to **pnpm@9** ("based on project creation date"); the
+   build command's `--legacy` flag needs **pnpm@10**, which Vercel only honors with Corepack
+   enabled (respects the `packageManager` field → pnpm@10.34.1).
+4. **`TURBO_PLATFORM_ENV_DISABLED=true`** — silences a turbo warning.
+
+Result: production build READY. `github-readme-stats-five-mu-85.vercel.app/api?username=boazcstrike&count_private=true&...`
+renders the full card (private counts work → `PAT_1` present).
+
+### ⚠️ Two-project gotcha (action needed)
+
+There are **two** Vercel deployments in play:
+
+| URL | Scope / project | State |
+|-----|-----------------|-------|
+| `github-readme-stats-boazcstrikes-projects.vercel.app` / `…-five-mu-85.vercel.app` | **team** `boazcstrikes-projects`, project `github-readme-stats` (git-connected, auto-deploys) | ✅ **fixed + patched monorepo** |
+| `github-readme-stats-boazcstrike.vercel.app` | **personal** scope `boazcstrike` — lingering alias from before the project moved to the team | ⚠️ **stale old code, NOT auto-deploying** |
+
+**The profile README (`boazcstrike/boazcstrike`) embeds the stale personal URL.** To put the
+profile on the maintained+patched deploy, repoint the card host:
+
+```
+https://github-readme-stats-boazcstrike.vercel.app/api?...   ❌ stale
+https://github-readme-stats-five-mu-85.vercel.app/api?...    ✅ fixed team project
+```
+
+(`five-mu-85` is the project's verified custom domain and tracks production;
+`…-boazcstrikes-projects.vercel.app` works too.)
+
 ## Security posture
 
 ### Dependency audit — CLEAN
