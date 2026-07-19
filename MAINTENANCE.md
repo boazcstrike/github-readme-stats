@@ -77,16 +77,30 @@ the old Vercel setup **will not build the new tree as-is**:
   (`getUserPat` → DB lookup). Basic env-PAT stats cards still work, but DB code paths expect a
   database to be configured.
 
-**To keep the profile card working after adopting this monorepo, the Vercel project must be
-reconfigured:** set **Root Directory = `apps/backend`** (so `apps/backend/vercel.json` is used),
-let Vercel use the Build Output API output, and keep the `PAT_1` (GitHub token) env var. The
-`/api?username=` route still exists (`router.js:82`), so the existing card URL stays valid once
-the build succeeds.
+**STATUS (2026-07-20): the auto-deploy for the monorepo push FAILED** (Vercel status =
+`failure` on `main`) because the project's **Root Directory is still `.`** (old flat-repo
+setting). The live card keeps serving the **last good (old) deploy**, so it is *not* down —
+but new commits will not ship until the project is reconfigured.
 
-> If auto-deploy is on, pushing this branch may trigger a build with the **old** project
-> settings, which will fail — Vercel keeps the last good deploy live, so the card should not
-> break, but the new features won't ship until the project is reconfigured. Verify in the
-> Vercel dashboard.
+**Fix (Vercel dashboard → project `github-readme-stats` → Settings):** — confirmed by the
+successor's own `docs/deploy.md` step 11.
+
+1. **General → Root Directory → set to `apps/backend`** (so `apps/backend/vercel.json` +
+   `vercel-preparation.sh` drive the Build Output API v3 build). ← the actual fix.
+2. **Environment Variables** — keep **`PAT_1`** (your GitHub PAT; classic `repo`+`read:user`
+   for private-contribution counts). Add **`TURBO_PLATFORM_ENV_DISABLED=true`** to silence a
+   harmless turbo build warning.
+3. Leave Framework Preset = **Other**; do not override Build/Install commands (vercel.json owns them).
+4. **Redeploy.** The `/api?username=` route still exists (`router.js:82`) → your existing card
+   URL stays valid once the build succeeds.
+
+Optional (NOT needed for the static card, and left OFF by our security patch): `POSTGRES_URL`
++ `OAUTH_CLIENT_ID`/`OAUTH_CLIENT_SECRET`/`OAUTH_REDIRECT_URI` enable the OAuth "trends" web
+app; `CRON_SECRET` for the proactive-regeneration cron. Our `requireOAuth` guard keeps those
+endpoints 404 until you set the OAuth trio.
+
+> Note: GitHub's "Sync Fork" button will **not** appear (this repo isn't a true GitHub fork of
+> the successor — parent is null). Use the manual `git merge extended/master` flow above.
 
 Old card URL (unchanged, still valid):
 `https://github-readme-stats-boazcstrike.vercel.app/api?username=boazcstrike&count_private=true&show_icons=true&theme=dark&include_all_commits`
