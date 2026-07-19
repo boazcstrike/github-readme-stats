@@ -1,5 +1,6 @@
 import { logger } from "@stats-organization/github-readme-stats-core";
 
+import { requireOAuth } from "../src/common/accessGuard.js";
 import { getUserAccessByKey } from "../src/common/database.js";
 
 /**
@@ -7,6 +8,9 @@ import { getUserAccessByKey } from "../src/common/database.js";
  * @param {any} res The response.
  */
 export default async (req, res) => {
+  if (!requireOAuth(res)) {
+    return;
+  }
   const { user_key } = req.query;
   try {
     const result = await getUserAccessByKey(user_key);
@@ -23,6 +27,7 @@ export default async (req, res) => {
     });
   } catch (err) {
     logger.error(err);
-    res.send("Something went wrong: " + err.message);
+    res.statusCode = 500;
+    res.send("Something went wrong");
   }
 };

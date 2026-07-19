@@ -1,9 +1,13 @@
+import { requireCronSecret } from "../src/common/accessGuard.js";
 import { repeatRecentRequests } from "../src/repeatRequests.js";
 
 export default async (req, res) => {
   if (req.method !== "POST") {
     res.statusCode = 405;
     res.send({ error: "Method Not Allowed" });
+    return;
+  }
+  if (!requireCronSecret(req, res)) {
     return;
   }
   try {

@@ -1,5 +1,6 @@
 import { logger } from "@stats-organization/github-readme-stats-core";
 
+import { requireOAuth } from "../src/common/accessGuard.js";
 import { authenticate } from "../src/users.js";
 
 /**
@@ -7,6 +8,9 @@ import { authenticate } from "../src/users.js";
  * @param {any} res The response.
  */
 export default async (req, res) => {
+  if (!requireOAuth(res)) {
+    return;
+  }
   const { code, private_access, user_key } = req.query;
   try {
     let { userId, needDowngrade } = await authenticate(
@@ -17,6 +21,7 @@ export default async (req, res) => {
     res.send({ userId, needDowngrade });
   } catch (err) {
     logger.error(err);
-    res.send("Something went wrong: " + err.message);
+    res.statusCode = 500;
+    res.send("Something went wrong");
   }
 };

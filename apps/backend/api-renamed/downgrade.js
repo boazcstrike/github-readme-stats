@@ -1,10 +1,15 @@
 import { logger } from "@stats-organization/github-readme-stats-core";
 import axios from "axios";
 
+import { requireOAuth } from "../src/common/accessGuard.js";
 import { deleteUser, getUserAccessByKey } from "../src/common/database.js";
 
 export default async (req, res) => {
   // We could optimize this method by doing both database operations in one statement, using "DELETE ... RETURNING ..."
+
+  if (!requireOAuth(res)) {
+    return;
+  }
 
   const { user_key } = req.query;
   if (!user_key) {
