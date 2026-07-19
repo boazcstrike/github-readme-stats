@@ -1,0 +1,37 @@
+name: Trigger server to update cached data
+on:
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │ ┌───────────── hour (0 - 23)
+    #        │ │  ┌───────────── day of the month (1 - 31)
+    #        │ │  │  ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │ │  │  │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │ │  │  │ │
+    #        │ │  │  │ │
+    #        │ │  │  │ │
+    #        * *  *  * *
+    - cron: "15,45 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  triggerRepeatRecent:
+    if: |
+      github.repository == 'anuraghazra/github-readme-stats' ||
+      github.repository == 'stats-organization/github-readme-stats' ||
+      github.repository == 'stats-organization/github-stats-extended'
+    name: Trigger server to update cached data.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make Request
+        id: myRequest
+        uses: fjogeleit/http-request-action@551353b829c3646756b2ec2b3694f819d7957495 # v2
+        with:
+          url: "https://github-stats-extended.vercel.app/api/repeat-recent"
+          method: "POST"
+          timeout: "300000"
+      - name: Show Response
+        run: |
+          echo ${{ steps.myRequest.outputs.response }}
+          echo ${{ steps.myRequest.outputs.status }}

@@ -1,0 +1,30 @@
+name: Publish core package to npm
+on:
+  workflow_dispatch:
+  release:
+    types: [released]
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Verify core package
+        run: |
+          pnpm --filter @stats-organization/github-readme-stats-core run typecheck
+          pnpm test
+          pnpm build:packages
+          pnpm --filter @stats-organization/github-readme-stats-core pack --dry-run
+
+      - name: Publish core package to npm
+        run: pnpm --filter @stats-organization/github-readme-stats-core publish --provenance --access public --no-git-checks
