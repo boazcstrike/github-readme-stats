@@ -174,6 +174,57 @@ easy to "fix" the wrong one. The **team** project (`five-mu-85` / `boazcstrikes-
 live, maintained, git-connected, security-patched one. The personal `…-boazcstrike` app is the
 legacy leftover.
 
+## CI / auto-deploy hygiene — dependabot + pnpm catalog (2026-07-22)
+
+**Problem:** every dependabot PR triggered a Vercel **preview** deploy, and many failed →
+a flood of "deployment failed" emails. Two independent root causes.
+
+### 1. Vercel now skips non-`main` builds (the spam fix)
+
+Added an `ignoreCommand` to **`apps/backend/vercel.json`** (project Root Directory):
+
+```json
+"ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]"
+```
+
+Vercel semantics: **exit 1 → build; exit 0 → skip.** So `main` builds, every other branch
+(dependabot/preview) is skipped (shows as **Canceled**, never `Error` → no failure email).
+Production is unaffected — `main` still auto-deploys.
+
+> ⚠️ `ignoreCommand` is read from **each branch's own** `vercel.json`. NEW dependabot PRs branch
+> from `main` and inherit the gate. EXISTING branches cut before the gate must be **rebased**
+> (`@dependabot rebase`) to pick it up — verified: rebased branches then deploy `Canceled`, not `Error`.
+
+### 2. pnpm `catalog:` vs dependabot lockfile drift (build ERESOLVE / OUTDATED_LOCKFILE)
+
+Dependency versions live in **`pnpm-workspace.yaml`** under `catalog:` (e.g. `vitest`, `@vitest/*`),
+and `package.json` references them as `"vitest": "catalog:default"`. When dependabot bumps such a
+dep it **pins the resolved version into the lockfile's specifier field** instead of keeping
+`catalog:default`, so Vercel's `pnpm install --frozen-lockfile` aborts:
+
+```
+ERR_PNPM_OUTDATED_LOCKFILE
+  specifiers in the lockfile don't match specifiers in package.json:
+  - vitest (lockfile: 4.1.10, manifest: catalog:default)
+```
+
+**Fix (per broken PR / after merging one to `main`):**
+
+```bash
+corepack pnpm install --lockfile-only   # restores specifier to catalog:default, keeps new version
+corepack pnpm install --frozen-lockfile # verify it now passes
+git commit -am "fix: restore catalog specifier in pnpm-lock" && git push
+```
+
+The diff is a **single line** (`specifier: 4.1.10` → `specifier: catalog:default`). With the gate
+above, a broken dependabot branch no longer emails — but **merging it to `main` will fail the
+production build** until you run the regen. (Historic case: PR #39 vitest bump.)
+
+### 3. Dependabot tuned to cut PR/deploy volume
+
+`.github/dependabot.yml`: `interval daily → weekly`, `open-pull-requests-limit 20 → 5`, dropped the
+unused **`devcontainers`** ecosystem. (npm + github-actions ecosystems kept.)
+
 ## Security posture
 
 ### Dependency audit — CLEAN
@@ -197,7 +248,7 @@ redirect, `dangerouslySetInnerHTML`.
 
 | # | Severity | Location | Issue |
 |---|----------|----------|-------|
-| 1 | ~~**HIGH**~~ ✅ **PATCHED** | `packages/core/src/fetchers/wakatime.js` | **SSRF** — `api_domain` query param interpolated into outbound URL unvalidated. Unauthenticated `/api/wakatime?api_domain=`. Attacker → cloud-metadata (`169.254.169.254`), localhost, or arbitrary host. `username` also un-encoded → path traversal off the fixed path. *(Confirmed independently by both agents.)* **Fork patch:** `api_domain` now validated as bare hostname, private/metadata IPs blocked, `username` `encodeURIComponent`-wrapped, `err.response` guarded. *This diverges from upstream — re-apply after each `extended` merge, or drop once fixed upstream.* |
+| 1 | ~~**HIGH**~~ ✅ **PATCHED** | `packages/core/src/fetchers/wakatime.js` | **SSRF** — `api_domain` query param interpolated into outbound URL unvalidated. Unauthenticated `/api/wakatime?api_domain=`. Attacker → cloud-metadata (`169.254.169.254`), localhost, or arbitrary host. `username` also un-encoded → path traversal off the fixed path. *(Confirmed independently by both agents.)* **Fork patch:** `api_domain` now validated as bare hostname, private/metadata IPs blocked, `username` `encodeURIComponent`-wrapped, `err.response` guarded. *This diverges from upstream — re-apply after each `extended` merge, or drop once fixed upstream.* **Test note:** the patch blocks `.local`/`.internal`/private-IP hosts, so `tests/public-instance/wakatime.test.js` must mock a **non-blocked** `api_domain` (uses `wakatime.example.com`); a `.local` domain renders the error card and fails the snapshot. |
 | 2 | ~~**HIGH**~~ ✅ **MITIGATED** | `apps/backend/api-renamed/user-access.js` | **Token disclosure** — unauthenticated `GET /api/user-access?user_key=` returns raw GitHub OAuth `access_token`. Secret `user_key` travels in URL query string (`frontend/src/api/user.ts`) → leaks to CDN/proxy logs + Referer. **Fork patch:** all OAuth endpoints (`user-access`/`authenticate`/`downgrade`/`delete-user`) now **secure-by-default** — gated by `requireOAuth()` (`accessGuard.js`); if OAuth isn't configured (`OAUTH_CLIENT_ID`+`OAUTH_CLIENT_SECRET`+`POSTGRES_URL`) they return **404** and never touch the DB/token. This eliminates the surface on the static-card deployment. *Residual (only if OAuth enabled):* `user_key` still rides in the URL query string — see upstream issue draft; real fix = move it to `Authorization` header/POST body. |
 | 3 | ~~MEDIUM~~ ✅ **PATCHED** | `apps/backend/api-renamed/repeat-recent.js` + `src/repeatRequests.js:28` | Unauthenticated request-amplification endpoint; replays all stored request URLs, no batch cap → DoS/PAT-quota burn. **Fork patch:** now requires `Authorization: Bearer $CRON_SECRET` (constant-time compare, `requireCronSecret`). Set `CRON_SECRET` in Vercel env + cron config. |
 | 4 | MEDIUM | `apps/frontend/src/components/Card/SvgInline.tsx:109` | Server SVG injected via `innerHTML` into live shadow root (not `<img>`) → removes the "SVG-is-just-an-image" mitigation; whole XSS surface now depends on zero escaping gaps. Use `<img src>` or DOMPurify. *(Not patched — frontend web-app only; report upstream.)* |
