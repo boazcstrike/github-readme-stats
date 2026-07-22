@@ -84,7 +84,7 @@ describe("Test /api/wakatime contract", () => {
     mock.reset(); // to verify api_domain param is working
     mock
       .onGet(
-        "https://wakatime.local/api/v1/users/anuraghazra/stats?is_including_today=true",
+        "https://wakatime.example.com/api/v1/users/anuraghazra/stats?is_including_today=true",
       )
       .reply(200, wakaTimeData);
 
@@ -100,7 +100,7 @@ describe("Test /api/wakatime contract", () => {
       layout: "compact",
       langs_count: "3",
       hide: "other",
-      api_domain: "wakatime.local",
+      api_domain: "wakatime.example.com",
       border_radius: "12",
       border_color: "fedcba",
       display_format: "percent",
