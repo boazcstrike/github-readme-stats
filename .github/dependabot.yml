@@ -4,8 +4,8 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 20
+      interval: weekly
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps-dev)"
@@ -62,22 +62,10 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 20
+      interval: weekly
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "ci(deps)"
       prefix-development: "ci(deps-dev)"
-    cooldown:
-      default-days: 7
-
-  # Maintain dependencies for Devcontainers
-  - package-ecosystem: devcontainers
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 20
-    commit-message:
-      prefix: "build(deps)"
-      prefix-development: "build(deps-dev)"
     cooldown:
       default-days: 7
